@@ -1,6 +1,9 @@
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Roman {
     private LinkedHashMap<Integer, String> encoder;
@@ -51,22 +54,23 @@ public class Roman {
 
     public int decode(String num) throws IllegalArgumentException {
         int result = 0;
-        int headIndex = 0;
-        String parsedChars = "";
-        for (Map.Entry<String, Integer> entry : decoder.entrySet()) {
-            int headLength = entry.getKey().length();
-            while (headIndex + headLength <= num.length()) {
-                String head = num.substring(headIndex, headIndex + headLength);
-                if (head.equals(entry.getKey())) {
-                    result += entry.getValue();
-                    parsedChars += head;
-                    headIndex += headLength;
-                } else {
-                    break;
+        String patternStr = "^(?<M>M{0,4})"
+                          + "((?<CM>(CM))|(?<CD>(CD))|((?<D>D?)(?<C>C{0,3})))"
+                          + "((?<XC>(XC))|(?<XL>(XL))|((?<L>L?)(?<X>X{0,3})))"
+                          + "((?<IX>(IX))|(?<IV>(IV))|((?<V>V?)(?<I>I{0,3})))$";
+        Matcher matcher = Pattern.compile(patternStr).matcher(num);
+        if (matcher.find()) {
+            for (Map.Entry<String, Integer> entry : decoder.entrySet()) {
+                String group = matcher.group(entry.getKey());
+                if (!Objects.isNull(group) && !group.isEmpty()) {
+                    if (entry.getKey().length() == 1) {
+                        result += group.length() * entry.getValue();
+                    } else {
+                        result += entry.getValue();
+                    }
                 }
             }
-        }
-        if (!parsedChars.equals(num)) {
+        } else {
             throw new IllegalArgumentException();
         }
         return result;
